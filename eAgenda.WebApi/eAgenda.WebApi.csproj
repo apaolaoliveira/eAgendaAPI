@@ -23,4 +23,8 @@
     <ProjectReference Include="..\eAgenda.Infra.Orm\eAgenda.Infra.Orm.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Controllers\Compartilhado\" />
+  </ItemGroup>
+
 </Project>

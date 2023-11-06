@@ -1,6 +1,7 @@
 ﻿using eAgenda.Aplicacao.ModuloContato;
 using eAgenda.Dominio.ModuloContato;
 using eAgenda.WebApi.ViewModels.ModuloContato;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace eAgenda.WebApi.Controllers.ModuloContato
@@ -27,70 +28,117 @@ namespace eAgenda.WebApi.Controllers.ModuloContato
         }
 
         [HttpGet("{id}")]
-        public FormContatoViewModel SelecionarPorId(Guid id)
-        {
-            Contato contato = _servicoContato.SelecionarPorId(id).Value;
+        public IActionResult SelecionarPorId(Guid id)
+        {            
+            try
+            {
+                Result<Contato> resultadoBusca = _servicoContato.SelecionarPorId(id);
 
-            return _mapeador.Map<FormContatoViewModel>(contato);
+                if (resultadoBusca.IsFailed)
+                    return NotFound(string.Join("\r\n", resultadoBusca.Errors.Select(e => e.Message).ToArray()));
+
+                FormContatoViewModel contato = _mapeador.Map<FormContatoViewModel>(resultadoBusca);
+
+                return Ok(contato);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
 
         [HttpGet("visualizacao-completa/{id}")]
-        public VisualizarContatoViewModel SelecionarCompletoPorId(Guid id)
+        public IActionResult SelecionarCompletoPorId(Guid id)
         {
-            Contato contato = _servicoContato.SelecionarPorId(id).Value;
+            try
+            {
+                Result<Contato> resultadoBusca = _servicoContato.SelecionarPorId(id);
 
-            return _mapeador.Map<VisualizarContatoViewModel>(contato);
+                if (resultadoBusca.IsFailed)
+                    return NotFound(string.Join("\r\n", resultadoBusca.Errors.Select(e => e.Message).ToArray()));
+
+                VisualizarContatoViewModel contato = _mapeador.Map<VisualizarContatoViewModel>(resultadoBusca);
+
+                return Ok(contato);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
 
         [HttpPost]
-        public string Inserir(FormContatoViewModel contatoViewModel)
+        public IActionResult Inserir(FormContatoViewModel contatoViewModel)
         {
-            Contato contato = _mapeador.Map<Contato>(contatoViewModel);
+            try
+            {
+                Contato contato = _mapeador.Map<Contato>(contatoViewModel);
+                Result<Contato> resultado = _servicoContato.Inserir(contato);
 
-            Result<Contato> resultado = _servicoContato.Inserir(contato);
-
-            return processarResultado(resultado, "inserido");
-        }
+                return ProcessarResultado(resultado, contatoViewModel);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }        
 
         [HttpPut("{id}")]
-        public string Editar(Guid id, FormContatoViewModel contatoViewModel)
+        public IActionResult Editar(Guid id, FormContatoViewModel contatoViewModel)
         {
-            Result<Contato> resultadoBusca = _servicoContato.SelecionarPorId(id);
+            try
+            {
+                Result<Contato> resultadoBusca = _servicoContato.SelecionarPorId(id);
 
-            if (resultadoBusca.IsFailed)
-                return string.Join("/r/n", resultadoBusca.Errors.Select(e => e.Message).ToArray());
+                if (resultadoBusca.IsFailed)
+                    return NotFound(string.Join("\r\n", resultadoBusca.Errors.Select(e => e.Message).ToArray()));
 
-            // mescla os dois objs mantendo a referência do objeto destino
-            Contato contato = _mapeador.Map(contatoViewModel, resultadoBusca.Value); // source, destination
+                // mescla os dois objs mantendo a referência do objeto destino
+                Contato contato = _mapeador.Map(contatoViewModel, resultadoBusca.Value); // source, destination
 
-            Result<Contato> resultado = _servicoContato.Editar(contato);
+                Result<Contato> resultado = _servicoContato.Editar(contato);
 
-            return processarResultado(resultado, "editado");
+                return ProcessarResultado(resultado, contatoViewModel);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
 
         [HttpDelete("{id}")]
-        public string Excluir(Guid id)
+        public IActionResult Excluir(Guid id)
         {
-            Result<Contato> resultadoBusca = _servicoContato.SelecionarPorId(id);
+            try
+            {
+                Result<Contato> resultadoBusca = _servicoContato.SelecionarPorId(id);
 
-            if (resultadoBusca.IsFailed)
-                return string.Join("/r/n", resultadoBusca.Errors.Select(e => e.Message).ToArray());            
+                if (resultadoBusca.IsFailed)
+                    return NotFound(string.Join("\r\n", resultadoBusca.Errors.Select(e => e.Message).ToArray()));
 
-            Contato contato = resultadoBusca.Value;
+                Contato contato = resultadoBusca.Value;
 
-            Result<Contato> resultado = _servicoContato.Excluir(contato);
+                Result<Contato> resultado = _servicoContato.Excluir(contato);
 
-            return processarResultado(resultado, "removido");
+                return ProcessarResultado(resultado);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
 
-        private string processarResultado(Result<Contato> resultado, string acao)
+        private IActionResult ProcessarResultado(Result<Contato> resultado, FormContatoViewModel contatoViewModel = null)
         {
-            if (resultado.IsSuccess)
-                return $"Contato {acao} com sucesso!";
+            if (resultado.IsFailed)
+                return BadRequest(resultado.Errors.Select(e => e.Message));
 
-            string[] erros = resultado.Errors.Select(x => x.Message).ToArray();
+            string enderecoContato = $"{Request.GetDisplayUrl()}/{resultado.Value.Id}";
 
-            return string.Join("\r\n", erros);
+            if(contatoViewModel == null)
+                return Created(enderecoContato, null);
+
+            return Created(enderecoContato, contatoViewModel);
         }
     }
 }

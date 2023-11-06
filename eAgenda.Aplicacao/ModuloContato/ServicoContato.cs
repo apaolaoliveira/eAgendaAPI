@@ -46,7 +46,7 @@ namespace eAgenda.Aplicacao.ModuloContato
 
                 Log.Logger.Error(ex, msgErro + " {ContatoId} ", contato.Id);
 
-                return Result.Fail(msgErro);
+                throw new Exception(msgErro, ex);
             }
         }
 
@@ -75,7 +75,7 @@ namespace eAgenda.Aplicacao.ModuloContato
 
                 Log.Logger.Error(ex, msgErro + " {ContatoId}", contato.Id);
 
-                return Result.Fail(msgErro);
+                throw new Exception(msgErro, ex);
             }
 
             return Result.Ok(contato);
@@ -83,12 +83,23 @@ namespace eAgenda.Aplicacao.ModuloContato
 
         public Result Excluir(Guid id)
         {
-            var contatoResult = SelecionarPorId(id);
+            try
+            {
+                var contatoResult = SelecionarPorId(id);
 
-            if (contatoResult.IsSuccess)
-                return Excluir(contatoResult.Value);
+                if (contatoResult.IsSuccess)
+                    return Excluir(contatoResult.Value);
 
-            return Result.Fail(contatoResult.Errors);
+                return Result.Fail(contatoResult.Errors);
+            }
+            catch (Exception exc)
+            {
+                string msgErro = "Falha no sistema ao tentar editar o Contato";
+
+                Log.Logger.Error(exc, msgErro + " {ContatoId}", id);
+
+                throw new Exception(msgErro, exc);
+            }
         }
 
         public Result Excluir(Contato contato)
@@ -113,7 +124,7 @@ namespace eAgenda.Aplicacao.ModuloContato
 
                 Log.Logger.Error(ex, msgErro + " {ContatoId}", contato.Id);
 
-                return Result.Fail(msgErro);
+                throw new Exception(msgErro, ex);
             }
         }
 
@@ -135,7 +146,7 @@ namespace eAgenda.Aplicacao.ModuloContato
 
                 Log.Logger.Error(ex, msgErro);
 
-                return Result.Fail(msgErro);
+                throw new Exception(msgErro, ex);
             }
         }
 
@@ -151,7 +162,7 @@ namespace eAgenda.Aplicacao.ModuloContato
                 {
                     Log.Logger.Warning("Contato {ContatoId} não encontrado", id);
 
-                    return Result.Fail("Contato não encontrado");
+                    return Result.Fail($"Contato {id} não encontrado");
                 }
 
                 Log.Logger.Information("Contato {ContatoId} selecionado com sucesso", id);
@@ -164,7 +175,7 @@ namespace eAgenda.Aplicacao.ModuloContato
 
                 Log.Logger.Error(ex, msgErro + " {ContatoId}", id);
 
-                return Result.Fail(msgErro);
+                throw new Exception(msgErro, ex);
             }
         }
 
@@ -190,7 +201,7 @@ namespace eAgenda.Aplicacao.ModuloContato
 
                 Log.Logger.Error(ex, msgErro + " {ContatoId}", contato.Id);
 
-                return Result.Fail(msgErro);
+                throw new Exception(msgErro, ex);
             }
         }
     }
