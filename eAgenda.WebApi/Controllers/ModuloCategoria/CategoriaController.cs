@@ -7,7 +7,7 @@ namespace eAgenda.WebApi.Controllers.ModuloCategoria
 {
     [ApiController]
     [Route("api/categorias")]
-    public class CategoriaController : Controller
+    public class CategoriaController : ControllerBase
     {
         private readonly ServicoCategoria _servicoCategoria;
         private readonly IMapper _mapeador;

@@ -7,7 +7,7 @@ namespace eAgenda.WebApi.Controllers.ModuloDespesa
 {
     [ApiController]
     [Route("api/despesas")]
-    public class DespesaController : Controller
+    public class DespesaController : ControllerBase
     {
         private readonly ServicoDespesa _servicoDespesa;
         private readonly IMapper _mapeador;

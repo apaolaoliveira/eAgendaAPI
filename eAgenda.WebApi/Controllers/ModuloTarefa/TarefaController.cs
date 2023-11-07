@@ -7,7 +7,7 @@ namespace eAgenda.WebApi.Controllers.ModuloTarefa
 {
     [ApiController]
     [Route("api/tarefas")]
-    public class TarefaController : Controller
+    public class TarefaController : ControllerBase
     {
         private readonly ServicoTarefa _servicoTarefa;
         private readonly IMapper _mapeador;
