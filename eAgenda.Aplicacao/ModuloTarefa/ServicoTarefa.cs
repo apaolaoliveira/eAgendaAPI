@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace eAgenda.Aplicacao.ModuloTarefa
 {
-    public class ServicoTarefa : ServicoBase<Tarefa, ValidadorTarefa>
+    public class ServicoTarefa : ServicoApiBase<Tarefa, ValidadorTarefa>, IServicoApiBase<Tarefa>
     {
         private IRepositorioTarefa repositorioTarefa;
         private IContextoPersistencia contextoPersistencia;

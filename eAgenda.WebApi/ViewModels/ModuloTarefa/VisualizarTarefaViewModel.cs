@@ -2,7 +2,7 @@
 
 namespace eAgenda.WebApi.ViewModels.ModuloTarefa
 {
-    public class VisualizarTarefaViewModel
+    public class VisualizarTarefaViewModel : ViewModelBase<VisualizarTarefaViewModel>
     {
         public Guid Id { get; set; }
         public string Titulo { get; set; }

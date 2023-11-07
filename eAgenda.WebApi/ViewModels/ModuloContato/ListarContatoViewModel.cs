@@ -1,6 +1,6 @@
 ﻿namespace eAgenda.WebApi.ViewModels.ModuloContato
 {
-    public class ListarContatoViewModel
+    public class ListarContatoViewModel : ViewModelBase<ListarContatoViewModel>
     {
         public Guid Id { get; set; }
         public string Nome { get; set; }

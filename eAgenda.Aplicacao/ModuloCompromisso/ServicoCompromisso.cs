@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace eAgenda.Aplicacao.ModuloCompromisso
 {
-    public class ServicoCompromisso : ServicoBase<Compromisso, ValidadorCompromisso>
+    public class ServicoCompromisso : ServicoApiBase<Compromisso, ValidadorCompromisso>, IServicoApiBase<Compromisso>
     {
         private IRepositorioCompromisso repositorioCompromisso;
         private IContextoPersistencia contextoPersistencia;

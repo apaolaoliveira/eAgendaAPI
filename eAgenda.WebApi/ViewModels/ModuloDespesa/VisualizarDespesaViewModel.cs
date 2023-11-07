@@ -3,7 +3,7 @@ using eAgenda.WebApi.ViewModels.ModuloCategoria;
 
 namespace eAgenda.WebApi.ViewModels.ModuloDespesa
 {
-    public class VisualizarDespesaViewModel
+    public class VisualizarDespesaViewModel : ViewModelBase<VisualizarDespesaViewModel>
     {
         public Guid Id { get; set; }
         public string Descricao { get; set; }

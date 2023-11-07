@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace eAgenda.Aplicacao
 {
-    public abstract class ServicoBase<TDominio, TValidador> where TValidador : AbstractValidator<TDominio>, new()
+    public abstract class ServicoApiBase<TDominio, TValidador> where TValidador : AbstractValidator<TDominio>, new()
     {
         protected virtual Result Validar(TDominio obj)
         {

@@ -12,133 +12,152 @@ namespace eAgenda.WebApi.Controllers.ModuloContato
     {
         private readonly ServicoContato _servicoContato;
         private readonly IMapper _mapeador;
+        private readonly ILogger<ContatoController> _logger;    
 
-        public ContatoController(ServicoContato servicoContato, IMapper mapeador)
+        public ContatoController(ServicoContato servicoContato, IMapper mapeador, ILogger<ContatoController> logger)
         {
             this._servicoContato = servicoContato;
             this._mapeador = mapeador;
+            _logger = logger;
         }
 
         [HttpGet]
-        public List<ListarContatoViewModel> SelecionarTodos(StatusFavoritoEnum statusFavorito)
+        [ProducesResponseType(typeof(ListarContatoViewModel), 200)]
+        [ProducesResponseType(typeof(string[]), 500)]
+        public IActionResult SelecionarTodos(StatusFavoritoEnum statusFavorito)
         {
+            this._logger.LogInformation("Selecionando todos os contatos");
+
             List<Contato> contatos = _servicoContato.SelecionarTodos(statusFavorito).Value;
 
-            return _mapeador.Map<List<ListarContatoViewModel>>(contatos);
+            return Ok(new
+            {
+                Sucesso = true,
+                Dados = _mapeador.Map<List<ListarContatoViewModel>>(contatos),
+                QtdRegistros = contatos.Count
+            });
         }
 
         [HttpGet("{id}")]
+        [ProducesResponseType(typeof(VisualizarContatoViewModel), 200)]
+        [ProducesResponseType(typeof(string[]), 404)]
+        [ProducesResponseType(typeof(string[]), 500)]
         public IActionResult SelecionarPorId(Guid id)
-        {            
-            try
+        {
+            this._logger.LogInformation($"Selecionando o contato com o id: {id}");
+
+            Result<Contato> resultadoBusca = _servicoContato.SelecionarPorId(id);
+
+            if (resultadoBusca.IsFailed)
+                return NotFound(new
+                {
+                    Sucesso = false,
+                    Erros = string.Join("\r\n", resultadoBusca.Errors.Select(e => e.Message).ToArray())
+                });
+
+            return Ok(new
             {
-                Result<Contato> resultadoBusca = _servicoContato.SelecionarPorId(id);
-
-                if (resultadoBusca.IsFailed)
-                    return NotFound(string.Join("\r\n", resultadoBusca.Errors.Select(e => e.Message).ToArray()));
-
-                FormContatoViewModel contato = _mapeador.Map<FormContatoViewModel>(resultadoBusca);
-
-                return Ok(contato);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
+                Sucesso = true,
+                Dados = _mapeador.Map<FormContatoViewModel>(resultadoBusca)
+            });
         }
 
         [HttpGet("visualizacao-completa/{id}")]
+        [ProducesResponseType(typeof(VisualizarContatoViewModel), 200)]
+        [ProducesResponseType(typeof(string[]), 404)]
+        [ProducesResponseType(typeof(string[]), 500)]
         public IActionResult SelecionarCompletoPorId(Guid id)
         {
-            try
+            this._logger.LogInformation($"Selecionando todas as info do contato com o id: {id}");
+
+            Result<Contato> resultadoBusca = _servicoContato.SelecionarPorId(id);
+
+            if (resultadoBusca.IsFailed)
+                return NotFound(new
+                {
+                    Sucesso = false,
+                    Erros = string.Join("\r\n", resultadoBusca.Errors.Select(e => e.Message).ToArray())
+                });
+
+            return Ok(new
             {
-                Result<Contato> resultadoBusca = _servicoContato.SelecionarPorId(id);
-
-                if (resultadoBusca.IsFailed)
-                    return NotFound(string.Join("\r\n", resultadoBusca.Errors.Select(e => e.Message).ToArray()));
-
-                VisualizarContatoViewModel contato = _mapeador.Map<VisualizarContatoViewModel>(resultadoBusca);
-
-                return Ok(contato);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
+                Sucesso = true,
+                Dados = _mapeador.Map<VisualizarContatoViewModel>(resultadoBusca)
+            });
         }
 
         [HttpPost]
+        [ProducesResponseType(typeof(FormContatoViewModel), 200)]
+        [ProducesResponseType(typeof(string[]), 400)]
+        [ProducesResponseType(typeof(string[]), 500)]
         public IActionResult Inserir(FormContatoViewModel contatoViewModel)
         {
-            try
-            {
-                Contato contato = _mapeador.Map<Contato>(contatoViewModel);
-                Result<Contato> resultado = _servicoContato.Inserir(contato);
+            this._logger.LogInformation($"Inserindo contato");
 
-                return ProcessarResultado(resultado, contatoViewModel);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
-        }        
+            Contato contato = _mapeador.Map<Contato>(contatoViewModel);
+
+            return ProcessarResultado(_servicoContato.Inserir(contato), contatoViewModel);
+        }
 
         [HttpPut("{id}")]
+        [ProducesResponseType(typeof(FormContatoViewModel), 200)]
+        [ProducesResponseType(typeof(string[]), 400)]
+        [ProducesResponseType(typeof(string[]), 404)]
+        [ProducesResponseType(typeof(string[]), 500)]
         public IActionResult Editar(Guid id, FormContatoViewModel contatoViewModel)
         {
-            try
-            {
-                Result<Contato> resultadoBusca = _servicoContato.SelecionarPorId(id);
+            this._logger.LogInformation($"Editando contato");
 
-                if (resultadoBusca.IsFailed)
-                    return NotFound(string.Join("\r\n", resultadoBusca.Errors.Select(e => e.Message).ToArray()));
+            Result<Contato> resultadoBusca = _servicoContato.SelecionarPorId(id);
 
-                // mescla os dois objs mantendo a referência do objeto destino
-                Contato contato = _mapeador.Map(contatoViewModel, resultadoBusca.Value); // source, destination
+            if (resultadoBusca.IsFailed)
+                return NotFound(new
+                {
+                    Sucesso = false,
+                    Erros = string.Join("\r\n", resultadoBusca.Errors.Select(e => e.Message).ToArray())
+                });
 
-                Result<Contato> resultado = _servicoContato.Editar(contato);
+            // mescla os dois objs mantendo a referência do objeto destino
+            Contato contato = _mapeador.Map(contatoViewModel, resultadoBusca.Value); // source, destination
 
-                return ProcessarResultado(resultado, contatoViewModel);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
+            return ProcessarResultado(_servicoContato.Editar(contato), contatoViewModel);
         }
 
         [HttpDelete("{id}")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(typeof(string[]), 400)]
+        [ProducesResponseType(typeof(string[]), 404)]
+        [ProducesResponseType(typeof(string[]), 500)]
         public IActionResult Excluir(Guid id)
         {
-            try
-            {
-                Result<Contato> resultadoBusca = _servicoContato.SelecionarPorId(id);
+            this._logger.LogInformation($"Excluindo contato");
 
-                if (resultadoBusca.IsFailed)
-                    return NotFound(string.Join("\r\n", resultadoBusca.Errors.Select(e => e.Message).ToArray()));
+            Result<Contato> resultadoBusca = _servicoContato.SelecionarPorId(id);
 
-                Contato contato = resultadoBusca.Value;
+            if (resultadoBusca.IsFailed)
+                return NotFound(new
+                {
+                    Sucesso = false,
+                    Erros = string.Join("\r\n", resultadoBusca.Errors.Select(e => e.Message).ToArray())
+                });
 
-                Result<Contato> resultado = _servicoContato.Excluir(contato);
-
-                return ProcessarResultado(resultado);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
+            return ProcessarResultado(_servicoContato.Excluir(resultadoBusca.Value));
         }
 
-        private IActionResult ProcessarResultado(Result<Contato> resultado, FormContatoViewModel contatoViewModel = null)
+        private IActionResult ProcessarResultado(Result<Contato> resultadoBusca, FormContatoViewModel contatoViewModel = null)
         {
-            if (resultado.IsFailed)
-                return BadRequest(resultado.Errors.Select(e => e.Message));
+            if (resultadoBusca.IsFailed)
+                return NotFound(new
+                {
+                    sucesso = false,
+                    erros = resultadoBusca.Errors.Select(e => e.Message)
+                });
 
-            string enderecoContato = $"{Request.GetDisplayUrl()}/{resultado.Value.Id}";
-
-            if(contatoViewModel == null)
-                return Created(enderecoContato, null);
-
-            return Created(enderecoContato, contatoViewModel);
+            return Ok(new
+            {
+                Sucesso = true,
+                Dados = contatoViewModel
+            });
         }
     }
 }

@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace eAgenda.Aplicacao.ModuloContato
 {
-    public class ServicoContato : ServicoBase<Contato, ValidadorContato>
+    public class ServicoContato : ServicoApiBase<Contato, ValidadorContato>, IServicoApiBase<Contato>
     {
         private IRepositorioContato repositorioContato;
         private IContextoPersistencia contextoPersistencia;

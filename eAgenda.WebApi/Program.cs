@@ -1,6 +1,9 @@
+using eAgenda.WebApi.Compartilhado;
 using eAgenda.WebApi.Configs.AutoMapperProfiles;
 using eAgenda.WebApi.Configs.InjecaoDependencia;
+using eAgenda.WebApi.Configs.Serilog;
 using eAgenda.WebApi.Configs.Swagger;
+using Microsoft.AspNetCore.Mvc;
 
 namespace eAgenda.WebApi
 {
@@ -9,9 +12,13 @@ namespace eAgenda.WebApi
         public static void Main(string[] args)
         {
             WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
-            
-            // Extensões de configurações feitas na pasta Configs
-            //builder.Services.AddAutoMapper(typeof(Program).Assembly); -> esse é um modo mais genérico de gerar dependência
+
+            builder.Services.Configure<ApiBehaviorOptions>(config =>
+            {
+                config.SuppressModelStateInvalidFilter = true;
+            });
+
+            builder.Services.ConfigurarSerilog(builder.Logging); 
             builder.Services.ConfigurarInjecaoDependencia(builder.Configuration);
             builder.Services.ConfigurarAutoMapper();
             builder.Services.ConfigurarSwagger();
@@ -20,7 +27,8 @@ namespace eAgenda.WebApi
 
             WebApplication app = builder.Build();
 
-            // Configure the HTTP request pipeline.
+            app.UseMiddleware<ManipuladorExcecoes>();
+
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();

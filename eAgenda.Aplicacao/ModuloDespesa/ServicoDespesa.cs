@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace eAgenda.Aplicacao.ModuloDespesa
 {
-    public class ServicoDespesa : ServicoBase<Despesa, ValidadorDespesa>
+    public class ServicoDespesa : ServicoApiBase<Despesa, ValidadorDespesa>, IServicoApiBase<Despesa>
     {
         private IRepositorioDespesa repositorioDespesa;
         private IContextoPersistencia contextoPersistencia;

@@ -2,7 +2,7 @@
 
 namespace eAgenda.WebApi.ViewModels.ModuloContato
 {
-    public class VisualizarContatoViewModel
+    public class VisualizarContatoViewModel : ViewModelBase<VisualizarContatoViewModel>
     {
         public VisualizarContatoViewModel()
         {

@@ -2,7 +2,7 @@
 
 namespace eAgenda.WebApi.ViewModels.ModuloCategoria
 {
-    public class VisualizarCategoriaViewModel
+    public class VisualizarCategoriaViewModel : ViewModelBase<VisualizarCategoriaViewModel>
     {
         public Guid Id { get; set; }
         public string Titulo { get; set; }

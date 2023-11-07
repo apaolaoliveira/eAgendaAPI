@@ -1,6 +1,6 @@
 ﻿namespace eAgenda.WebApi.ViewModels.ModuloCategoria
 {
-    public class ListarCategoriaViewModel
+    public class ListarCategoriaViewModel : ViewModelBase<ListarCategoriaViewModel>
     {
         public Guid Id { get; set; }
         public string Titulo { get; set; }

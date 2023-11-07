@@ -3,7 +3,7 @@ using eAgenda.WebApi.ViewModels.ModuloContato;
 
 namespace eAgenda.WebApi.ViewModels.ModuloCompromisso
 {
-    public class VisualizarCompromissoViewModel
+    public class VisualizarCompromissoViewModel : ViewModelBase<VisualizarCompromissoViewModel>
     {
         public Guid Id { get; set; }
         public string Assunto { get; set; }

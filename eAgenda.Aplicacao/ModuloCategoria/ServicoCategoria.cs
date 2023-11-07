@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace eAgenda.Aplicacao.ModuloCategoria
 {
-    public class ServicoCategoria : ServicoBase<Categoria, ValidadorCategoria>
+    public class ServicoCategoria : ServicoApiBase<Categoria, ValidadorCategoria>, IServicoApiBase<Categoria>
     {
         private IRepositorioCategoria repositorioCategoria;
         private IContextoPersistencia contextoPersistencia;
