@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using Serilog;
+using System.Text.Json;
 
 namespace eAgenda.WebApi.Compartilhado
 {
@@ -25,6 +26,8 @@ namespace eAgenda.WebApi.Compartilhado
                     sucesso = false,
                     erros = new List<string>() { ex.Message }
                 };
+
+                Log.Logger.Error(ex, ex.Message);
 
                 ctx.Response.WriteAsync(JsonSerializer.Serialize(retorno));
             }

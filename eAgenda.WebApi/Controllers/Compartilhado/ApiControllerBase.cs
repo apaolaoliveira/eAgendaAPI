@@ -4,24 +4,21 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace eAgenda.WebApi.Controllers.Compartilhado
 {
-    public abstract class ApiControllerBase<TFormViewModel, TListarViewMode, TVisualizarViewModel, TEntidade, TControlador> : ControllerBase
+    public abstract class ApiControllerBase<TFormViewModel, TListarViewMode, TVisualizarViewModel, TEntidade> : ControllerBase
         where TFormViewModel : ViewModelBase<TFormViewModel>
         where TListarViewMode : ViewModelBase<TListarViewMode>
         where TVisualizarViewModel : ViewModelBase<TVisualizarViewModel>
         where TEntidade : EntidadeBase<TEntidade>
-        where TControlador : class
     {
-        protected readonly ILogger<TControlador> _logger;
         protected readonly IMapper _mapeador;
 
         protected IServicoApiBase<TEntidade> _servico;
         protected string entidade = "";
 
-        public ApiControllerBase(IServicoApiBase<TEntidade> servico, IMapper mapeador, ILogger<TControlador> logger)
+        public ApiControllerBase(IServicoApiBase<TEntidade> servico, IMapper mapeador)
         {
             _servico = servico;
             _mapeador = mapeador;
-            _logger = logger;
         }
 
         [HttpGet]
@@ -30,8 +27,6 @@ namespace eAgenda.WebApi.Controllers.Compartilhado
         [ProducesResponseType(typeof(string[]), 500)]
         public IActionResult SelecionarTodos()
         {
-            this._logger.LogInformation($"Selecionando todos os registos de {entidade}s");
-
             List<TEntidade> registro = _servico.SelecionarTodos().Value;
 
             return Ok(new
@@ -49,8 +44,6 @@ namespace eAgenda.WebApi.Controllers.Compartilhado
         [ProducesResponseType(typeof(string[]), 500)]
         public IActionResult SelecionarPorId(Guid id)
         {
-            this._logger.LogInformation($"Selecionando {entidade} com o id: {id}");
-
             Result<TEntidade> resultadoBusca = _servico.SelecionarPorId(id);
 
             if (resultadoBusca.IsFailed)
@@ -74,8 +67,6 @@ namespace eAgenda.WebApi.Controllers.Compartilhado
         [ProducesResponseType(typeof(string[]), 500)]
         public IActionResult SelecionarCompletoPorId(Guid id)
         {
-            this._logger.LogInformation($"Selecionando todas as informações de {entidade} com o id: {id}");
-
             Result<TEntidade> resultadoBusca = _servico.SelecionarPorId(id);
 
             if (resultadoBusca.IsFailed)
@@ -99,8 +90,6 @@ namespace eAgenda.WebApi.Controllers.Compartilhado
         [ProducesResponseType(typeof(string[]), 500)]
         public IActionResult Inserir(TFormViewModel formViewModel)
         {
-            this._logger.LogInformation($"Inserindo {entidade}");
-
             TEntidade registro = _mapeador.Map<TEntidade>(formViewModel);
 
             return ProcessarResultado(_servico.Inserir(registro), formViewModel);
@@ -114,8 +103,6 @@ namespace eAgenda.WebApi.Controllers.Compartilhado
         [ProducesResponseType(typeof(string[]), 500)]
         public IActionResult Editar(Guid id, TFormViewModel formViewModel)
         {
-            this._logger.LogInformation($"Editando {entidade}");
-
             Result<TEntidade> resultadoBusca = _servico.SelecionarPorId(id);
 
             if (resultadoBusca.IsFailed)
@@ -137,8 +124,6 @@ namespace eAgenda.WebApi.Controllers.Compartilhado
         [ProducesResponseType(typeof(string[]), 500)]
         public IActionResult Excluir(Guid id)
         {
-            this._logger.LogInformation($"Excluindo {entidade}");
-
             Result<TEntidade> resultadoBusca = _servico.SelecionarPorId(id);
 
             if (resultadoBusca.IsFailed)

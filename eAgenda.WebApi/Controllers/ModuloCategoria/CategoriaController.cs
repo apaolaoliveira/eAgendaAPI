@@ -8,9 +8,9 @@ namespace eAgenda.WebApi.Controllers.ModuloCategoria
 {
     [ApiController]
     [Route("api/categorias")]
-    public class CategoriaController : ApiControllerBase<FormCategoriaViewModel, ListarCategoriaViewModel, VisualizarCategoriaViewModel, Categoria, CategoriaController>
+    public class CategoriaController : ApiControllerBase<FormCategoriaViewModel, ListarCategoriaViewModel, VisualizarCategoriaViewModel, Categoria>
     {
-        public CategoriaController(ServicoCategoria servicoCategoria, IMapper map, ILogger<CategoriaController> logger) : base(servicoCategoria, map, logger)
+        public CategoriaController(ServicoCategoria servicoCategoria, IMapper map) : base(servicoCategoria, map)
         {
             entidade = "categoria";
         }     

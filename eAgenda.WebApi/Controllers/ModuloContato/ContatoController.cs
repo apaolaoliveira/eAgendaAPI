@@ -11,14 +11,12 @@ namespace eAgenda.WebApi.Controllers.ModuloContato
     public class ContatoController : ControllerBase
     {
         private readonly ServicoContato _servicoContato;
-        private readonly IMapper _mapeador;
-        private readonly ILogger<ContatoController> _logger;    
+        private readonly IMapper _mapeador;   
 
-        public ContatoController(ServicoContato servicoContato, IMapper mapeador, ILogger<ContatoController> logger)
+        public ContatoController(ServicoContato servicoContato, IMapper mapeador)
         {
             this._servicoContato = servicoContato;
             this._mapeador = mapeador;
-            _logger = logger;
         }
 
         [HttpGet]
@@ -26,8 +24,6 @@ namespace eAgenda.WebApi.Controllers.ModuloContato
         [ProducesResponseType(typeof(string[]), 500)]
         public IActionResult SelecionarTodos(StatusFavoritoEnum statusFavorito)
         {
-            this._logger.LogInformation("Selecionando todos os contatos");
-
             List<Contato> contatos = _servicoContato.SelecionarTodos(statusFavorito).Value;
 
             return Ok(new
@@ -44,8 +40,6 @@ namespace eAgenda.WebApi.Controllers.ModuloContato
         [ProducesResponseType(typeof(string[]), 500)]
         public IActionResult SelecionarPorId(Guid id)
         {
-            this._logger.LogInformation($"Selecionando o contato com o id: {id}");
-
             Result<Contato> resultadoBusca = _servicoContato.SelecionarPorId(id);
 
             if (resultadoBusca.IsFailed)
@@ -68,8 +62,6 @@ namespace eAgenda.WebApi.Controllers.ModuloContato
         [ProducesResponseType(typeof(string[]), 500)]
         public IActionResult SelecionarCompletoPorId(Guid id)
         {
-            this._logger.LogInformation($"Selecionando todas as info do contato com o id: {id}");
-
             Result<Contato> resultadoBusca = _servicoContato.SelecionarPorId(id);
 
             if (resultadoBusca.IsFailed)
@@ -92,8 +84,6 @@ namespace eAgenda.WebApi.Controllers.ModuloContato
         [ProducesResponseType(typeof(string[]), 500)]
         public IActionResult Inserir(FormContatoViewModel contatoViewModel)
         {
-            this._logger.LogInformation($"Inserindo contato");
-
             Contato contato = _mapeador.Map<Contato>(contatoViewModel);
 
             return ProcessarResultado(_servicoContato.Inserir(contato), contatoViewModel);
@@ -106,8 +96,6 @@ namespace eAgenda.WebApi.Controllers.ModuloContato
         [ProducesResponseType(typeof(string[]), 500)]
         public IActionResult Editar(Guid id, FormContatoViewModel contatoViewModel)
         {
-            this._logger.LogInformation($"Editando contato");
-
             Result<Contato> resultadoBusca = _servicoContato.SelecionarPorId(id);
 
             if (resultadoBusca.IsFailed)
@@ -130,8 +118,6 @@ namespace eAgenda.WebApi.Controllers.ModuloContato
         [ProducesResponseType(typeof(string[]), 500)]
         public IActionResult Excluir(Guid id)
         {
-            this._logger.LogInformation($"Excluindo contato");
-
             Result<Contato> resultadoBusca = _servicoContato.SelecionarPorId(id);
 
             if (resultadoBusca.IsFailed)

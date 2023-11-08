@@ -3,6 +3,7 @@ using eAgenda.WebApi.Configs.AutoMapperProfiles;
 using eAgenda.WebApi.Configs.InjecaoDependencia;
 using eAgenda.WebApi.Configs.Serilog;
 using eAgenda.WebApi.Configs.Swagger;
+using eAgenda.WebApi.Filtros;
 using Microsoft.AspNetCore.Mvc;
 
 namespace eAgenda.WebApi
@@ -23,7 +24,10 @@ namespace eAgenda.WebApi
             builder.Services.ConfigurarAutoMapper();
             builder.Services.ConfigurarSwagger();
 
-            builder.Services.AddControllers();
+            builder.Services.AddControllers(config =>
+            {
+                config.Filters.Add<SerilogActionFilter>();
+            });
 
             WebApplication app = builder.Build();
 

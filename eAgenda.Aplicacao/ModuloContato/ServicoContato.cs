@@ -21,188 +21,81 @@ namespace eAgenda.Aplicacao.ModuloContato
 
         public Result<Contato> Inserir(Contato contato)
         {
-            Log.Logger.Debug("Tentando inserir contato... {@c}", contato);
-
             Result resultado = Validar(contato);
 
             if (resultado.IsFailed)
                 return Result.Fail(resultado.Errors);
 
-            try
-            {
-                repositorioContato.Inserir(contato);
+            repositorioContato.Inserir(contato);
 
-                contextoPersistencia.GravarDados();
+            contextoPersistencia.GravarDados();
 
-                Log.Logger.Information("Contato {ContatoId} inserido com sucesso", contato.Id);
-
-                return Result.Ok(contato);
-            }
-            catch (Exception ex)
-            {
-                contextoPersistencia.DesfazerAlteracoes();
-
-                string msgErro = "Falha no sistema ao tentar inserir o Contato";
-
-                Log.Logger.Error(ex, msgErro + " {ContatoId} ", contato.Id);
-
-                throw new Exception(msgErro, ex);
-            }
+            return Result.Ok(contato);
         }
 
         public Result<Contato> Editar(Contato contato)
         {
-            Log.Logger.Debug("Tentando editar contato... {@c}", contato);
-
             var resultado = Validar(contato);
 
             if (resultado.IsFailed)
                 return Result.Fail(resultado.Errors);
 
-            try
-            {
-                repositorioContato.Editar(contato);
+            repositorioContato.Editar(contato);
 
-                contextoPersistencia.GravarDados();
-
-                Log.Logger.Information("Contato {ContatoId} editado com sucesso", contato.Id);
-            }
-            catch (Exception ex)
-            {
-                contextoPersistencia.DesfazerAlteracoes();
-
-                string msgErro = "Falha no sistema ao tentar editar o Contato";
-
-                Log.Logger.Error(ex, msgErro + " {ContatoId}", contato.Id);
-
-                throw new Exception(msgErro, ex);
-            }
+            contextoPersistencia.GravarDados();
 
             return Result.Ok(contato);
         }
 
         public Result Excluir(Guid id)
         {
-            try
-            {
-                var contatoResult = SelecionarPorId(id);
+            var contatoResult = SelecionarPorId(id);
 
-                if (contatoResult.IsSuccess)
-                    return Excluir(contatoResult.Value);
+            if (contatoResult.IsSuccess)
+                return Excluir(contatoResult.Value);
 
-                return Result.Fail(contatoResult.Errors);
-            }
-            catch (Exception exc)
-            {
-                string msgErro = "Falha no sistema ao tentar editar o Contato";
-
-                Log.Logger.Error(exc, msgErro + " {ContatoId}", id);
-
-                throw new Exception(msgErro, exc);
-            }
+            return Result.Fail(contatoResult.Errors);
         }
 
         public Result Excluir(Contato contato)
         {
-            Log.Logger.Debug("Tentando excluir contato... {@c}", contato);
+            repositorioContato.Excluir(contato);
 
-            try
-            {
-                repositorioContato.Excluir(contato);
+            contextoPersistencia.GravarDados();
 
-                contextoPersistencia.GravarDados();
-
-                Log.Logger.Information("Contato {ContatoId} editado com sucesso", contato.Id);
-
-                return Result.Ok();
-            }
-            catch (Exception ex)
-            {
-                contextoPersistencia.DesfazerAlteracoes();
-
-                string msgErro = "Falha no sistema ao tentar excluir o Contato";
-
-                Log.Logger.Error(ex, msgErro + " {ContatoId}", contato.Id);
-
-                throw new Exception(msgErro, ex);
-            }
+            return Result.Ok();
         }
 
         public Result<List<Contato>> SelecionarTodos(StatusFavoritoEnum statusFavorito)
         {
-            Log.Logger.Debug("Tentando selecionar contatos...");
+            var contatos = repositorioContato.SelecionarTodos(statusFavorito);
 
-            try
-            {
-                var contatos = repositorioContato.SelecionarTodos(statusFavorito);
-
-                Log.Logger.Information("Contatos selecionados com sucesso");
-
-                return Result.Ok(contatos);
-            }
-            catch (Exception ex)
-            {
-                string msgErro = "Falha no sistema ao tentar selecionar todos os Contatos";
-
-                Log.Logger.Error(ex, msgErro);
-
-                throw new Exception(msgErro, ex);
-            }
+            return Result.Ok(contatos);
         }
 
         public Result<Contato> SelecionarPorId(Guid id)
         {
-            Log.Logger.Debug("Tentando selecionar contato {ContatoId}...", id);
+            var contato = repositorioContato.SelecionarPorId(id);
 
-            try
+            if (contato == null)
             {
-                var contato = repositorioContato.SelecionarPorId(id);
+                Log.Logger.Warning("Contato {ContatoId} não encontrado", id);
 
-                if (contato == null)
-                {
-                    Log.Logger.Warning("Contato {ContatoId} não encontrado", id);
-
-                    return Result.Fail($"Contato {id} não encontrado");
-                }
-
-                Log.Logger.Information("Contato {ContatoId} selecionado com sucesso", id);
-
-                return Result.Ok(contato);
+                return Result.Fail($"Contato {id} não encontrado");
             }
-            catch (Exception ex)
-            {
-                string msgErro = "Falha no sistema ao tentar selecionar o Contato";
 
-                Log.Logger.Error(ex, msgErro + " {ContatoId}", id);
-
-                throw new Exception(msgErro, ex);
-            }
+            return Result.Ok(contato);
         }
 
         public Result<Contato> ConfigurarFavoritos(Contato contato)
         {
-            Log.Logger.Debug("Tentando favoritar contato {ContatoId}...", contato.Id);
+            contato.ConfigurarFavorito();
 
-            try
-            {
-                contato.ConfigurarFavorito();
+            repositorioContato.Editar(contato);
 
-                repositorioContato.Editar(contato);
+            contextoPersistencia.GravarDados();
 
-                contextoPersistencia.GravarDados();
-
-                Log.Logger.Information("Contato {ContatoId} favoritado com sucesso", contato.Id);
-
-                return Result.Ok(contato);
-            }
-            catch (Exception ex)
-            {
-                string msgErro = "Falha no sistema ao tentar favoritar o Contato";
-
-                Log.Logger.Error(ex, msgErro + " {ContatoId}", contato.Id);
-
-                throw new Exception(msgErro, ex);
-            }
+            return Result.Ok(contato);
         }
     }
 }
