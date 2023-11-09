@@ -83,6 +83,10 @@ namespace eAgenda.WebApi.Controllers.ModuloCategoria
         }
 
         [HttpDelete("{id}")]
+        [ProducesResponseType(typeof(FormCategoriaViewModel), 200)]
+        [ProducesResponseType(typeof(string[]), 400)]
+        [ProducesResponseType(typeof(string[]), 404)]
+        [ProducesResponseType(typeof(string[]), 500)]
         public IActionResult Excluir(Guid id)
         {
             Result<Categoria> resultadoBusca = _servicoCategoria.SelecionarPorId(id);
