@@ -14,7 +14,7 @@ namespace eAgenda.WebApi.Configs.Serilog
               .WriteTo.Console()
               .CreateLogger();
 
-            Log.Logger.Information("--- Bem vindo ao e-Agenda ---");
+            Log.Logger.Information("--- Bem vindo ao e-Agenda Api ---");
 
             services.AddSerilog(Log.Logger);
         }

@@ -1,13 +1,12 @@
 ﻿using eAgenda.Aplicacao.ModuloCompromisso;
 using eAgenda.Dominio.ModuloCompromisso;
 using eAgenda.WebApi.ViewModels.ModuloCompromisso;
-using Microsoft.AspNetCore.Mvc;
 
 namespace eAgenda.WebApi.Controllers.ModuloCompromisso
 {
     [ApiController]
     [Route("api/compromissos")]
-    public class CompromissoController : ControllerBase
+    public class CompromissoController : ApiControllerBase
     {
         private readonly ServicoCompromisso _servicoCompromisso;
         private readonly IMapper _mapeador;
@@ -19,77 +18,82 @@ namespace eAgenda.WebApi.Controllers.ModuloCompromisso
         }
 
         [HttpGet]
-        public List<ListarCompromissoViewModel> SelecionarTodos()
+        [ProducesResponseType(typeof(ListarCompromissoViewModel), 200)]
+        [ProducesResponseType(typeof(string[]), 500)]
+        public IActionResult SelecionarTodos()
         {
-            List<Compromisso> compromissos = _servicoCompromisso.SelecionarTodos().Value;
+            Result<List<Compromisso>> resultadoBusca = _servicoCompromisso.SelecionarTodos();
 
-            return _mapeador.Map<List<ListarCompromissoViewModel>>(compromissos);
+            if (resultadoBusca.IsFailed) return StatusNotFound(resultadoBusca);
+
+            return ProcessarResultado(resultadoBusca, _mapeador.Map<List<ListarCompromissoViewModel>>(resultadoBusca.Value));
         }
 
         [HttpGet("{id}")]
-        public FormCompromissoViewModel SelecionarPorId(Guid id)
+        [ProducesResponseType(typeof(FormCompromissoViewModel), 200)]
+        [ProducesResponseType(typeof(string[]), 404)]
+        [ProducesResponseType(typeof(string[]), 500)]
+        public IActionResult SelecionarPorId(Guid id)
         {
-            Compromisso compromisso = _servicoCompromisso.SelecionarPorId(id).Value;
+            Result<Compromisso> resultadoBusca = _servicoCompromisso.SelecionarPorId(id);
 
-            return _mapeador.Map<FormCompromissoViewModel>(compromisso);
+            if (resultadoBusca.IsFailed) return StatusNotFound(resultadoBusca);
+
+            return ProcessarResultado(resultadoBusca, _mapeador.Map<FormCompromissoViewModel>(resultadoBusca.Value));
         }
 
         [HttpGet("visualizacao-completa/{id}")]
-        public VisualizarCompromissoViewModel SelecionarCompletoPorId(Guid id)
+        [ProducesResponseType(typeof(VisualizarCompromissoViewModel), 200)]
+        [ProducesResponseType(typeof(string[]), 404)]
+        [ProducesResponseType(typeof(string[]), 500)]
+        public IActionResult SelecionarCompletoPorId(Guid id)
         {
-            Compromisso compromisso = _servicoCompromisso.SelecionarPorId(id).Value;
+            Result<Compromisso> resultadoBusca = _servicoCompromisso.SelecionarPorId(id);
 
-            return _mapeador.Map<VisualizarCompromissoViewModel>(compromisso);
+            if (resultadoBusca.IsFailed) return StatusNotFound(resultadoBusca);
+
+            return ProcessarResultado(resultadoBusca, _mapeador.Map<VisualizarCompromissoViewModel>(resultadoBusca.Value));
         }
 
         [HttpPost]
-        public string Inserir(FormCompromissoViewModel compromissoViewModel)
+        [ProducesResponseType(typeof(FormCompromissoViewModel), 200)]
+        [ProducesResponseType(typeof(string[]), 400)]
+        [ProducesResponseType(typeof(string[]), 500)]
+        public IActionResult Inserir(FormCompromissoViewModel compromissoViewModel)
         {
-            Compromisso compromisso = _mapeador.Map<Compromisso>(compromissoViewModel);
+            Result<Compromisso> resultado = _servicoCompromisso.Inserir(_mapeador.Map<Compromisso>(compromissoViewModel));
 
-            Result<Compromisso> resultado = _servicoCompromisso.Inserir(compromisso);
-
-            return processarResultado(resultado, "inserido");
+            return ProcessarResultado(resultado, compromissoViewModel);
         }
 
         [HttpPut("{id}")]
-        public string Editar(Guid id, FormCompromissoViewModel compromissoViewModel)
+        [ProducesResponseType(typeof(FormCompromissoViewModel), 200)]
+        [ProducesResponseType(typeof(string[]), 400)]
+        [ProducesResponseType(typeof(string[]), 404)]
+        [ProducesResponseType(typeof(string[]), 500)]
+        public IActionResult Editar(Guid id, FormCompromissoViewModel compromissoViewModel)
         {
             Result<Compromisso> resultadoBusca = _servicoCompromisso.SelecionarPorId(id);
 
-            if (resultadoBusca.IsFailed)
-                return string.Join("/r/n", resultadoBusca.Errors.Select(e => e.Message).ToArray());
+            if (resultadoBusca.IsFailed) return StatusNotFound(resultadoBusca);
 
-            Compromisso compromisso = _mapeador.Map(compromissoViewModel, resultadoBusca.Value);
+            Result<Compromisso> resultado = _servicoCompromisso.Editar(_mapeador.Map(compromissoViewModel, resultadoBusca.Value));
 
-            Result<Compromisso> resultado = _servicoCompromisso.Editar(compromisso);
-
-            return processarResultado(resultado, "editado");
+            return ProcessarResultado(resultado, compromissoViewModel);
         }
 
         [HttpDelete("{id}")]
-        public string Excluir(Guid id)
+        [ProducesResponseType(typeof(FormCompromissoViewModel), 200)]
+        [ProducesResponseType(typeof(string[]), 400)]
+        [ProducesResponseType(typeof(string[]), 404)]
+        [ProducesResponseType(typeof(string[]), 500)]
+        public IActionResult Excluir(Guid id)
         {
             Result<Compromisso> resultadoBusca = _servicoCompromisso.SelecionarPorId(id);
 
-            if (resultadoBusca.IsFailed)
-                return string.Join("/r/n", resultadoBusca.Errors.Select(e => e.Message).ToArray());
+            if (resultadoBusca.IsFailed) return StatusNotFound(resultadoBusca);
 
-            Compromisso compromisso = resultadoBusca.Value;
-
-            Result<Compromisso> resultado = _servicoCompromisso.Excluir(compromisso);
-
-            return processarResultado(resultado, "removido");
-        }
-
-        private string processarResultado(Result<Compromisso> resultado, string acao)
-        {
-            if (resultado.IsSuccess)
-                return $"Compromisso {acao} com sucesso!";
-
-            string[] erros = resultado.Errors.Select(x => x.Message).ToArray();
-
-            return string.Join("\r\n", erros);
+            return ProcessarResultado<Compromisso>(_servicoCompromisso.Excluir(resultadoBusca.Value));
         }
     }
 }

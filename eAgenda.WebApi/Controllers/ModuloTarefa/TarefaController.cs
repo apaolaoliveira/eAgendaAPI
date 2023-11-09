@@ -1,13 +1,12 @@
 ﻿using eAgenda.Aplicacao.ModuloTarefa;
 using eAgenda.Dominio.ModuloTarefa;
 using eAgenda.WebApi.ViewModels.ModuloTarefa;
-using Microsoft.AspNetCore.Mvc;
 
 namespace eAgenda.WebApi.Controllers.ModuloTarefa
 {
     [ApiController]
     [Route("api/tarefas")]
-    public class TarefaController : ControllerBase
+    public class TarefaController : ApiControllerBase
     {
         private readonly ServicoTarefa _servicoTarefa;
         private readonly IMapper _mapeador;
@@ -19,77 +18,82 @@ namespace eAgenda.WebApi.Controllers.ModuloTarefa
         }
 
         [HttpGet]
-        public List<ListarTarefaViewModel> SelecionarTodos(StatusTarefaEnum statusSelecionado)
+        [ProducesResponseType(typeof(ListarTarefaViewModel), 200)]
+        [ProducesResponseType(typeof(string[]), 500)]
+        public IActionResult SelecionarTodos(StatusTarefaEnum statusSelecionado)
         {
-            List<Tarefa> Tarefas = _servicoTarefa.SelecionarTodos(statusSelecionado).Value;
+            Result<List<Tarefa>> resultadoBusca = _servicoTarefa.SelecionarTodos(statusSelecionado);
 
-            return _mapeador.Map<List<ListarTarefaViewModel>>(Tarefas);
+            if (resultadoBusca.IsFailed) return StatusNotFound(resultadoBusca);
+
+            return ProcessarResultado(resultadoBusca, _mapeador.Map<ListarTarefaViewModel>(resultadoBusca.Value));
         }
 
         [HttpGet("{id}")]
-        public FormTarefaViewModel SelecionarPorId(Guid id)
+        [ProducesResponseType(typeof(FormTarefaViewModel), 200)]
+        [ProducesResponseType(typeof(string[]), 404)]
+        [ProducesResponseType(typeof(string[]), 500)]
+        public IActionResult SelecionarPorId(Guid id)
         {
-            Tarefa tarefa = _servicoTarefa.SelecionarPorId(id).Value;
+            Result<Tarefa> resultadoBusca = _servicoTarefa.SelecionarPorId(id);
 
-            return _mapeador.Map<FormTarefaViewModel>(tarefa);
+            if (resultadoBusca.IsFailed) return StatusNotFound(resultadoBusca);
+
+            return ProcessarResultado(resultadoBusca, _mapeador.Map<ListarTarefaViewModel>(resultadoBusca.Value));
         }
 
         [HttpGet("visualizacao-completa/{id}")]
-        public VisualizarTarefaViewModel SelecionarCompletoPorId(Guid id)
+        [ProducesResponseType(typeof(VisualizarTarefaViewModel), 200)]
+        [ProducesResponseType(typeof(string[]), 404)]
+        [ProducesResponseType(typeof(string[]), 500)]
+        public IActionResult SelecionarCompletoPorId(Guid id)
         {
-            Tarefa tarefa = _servicoTarefa.SelecionarPorId(id).Value;
+            Result<Tarefa> resultadoBusca = _servicoTarefa.SelecionarPorId(id);
 
-            return _mapeador.Map<VisualizarTarefaViewModel>(tarefa);
+            if (resultadoBusca.IsFailed) return StatusNotFound(resultadoBusca);
+
+            return ProcessarResultado(resultadoBusca, _mapeador.Map<VisualizarTarefaViewModel>(resultadoBusca.Value));
         }
 
         [HttpPost]
-        public string Inserir(FormTarefaViewModel tarefaViewModel)
+        [ProducesResponseType(typeof(FormTarefaViewModel), 200)]
+        [ProducesResponseType(typeof(string[]), 400)]
+        [ProducesResponseType(typeof(string[]), 500)]
+        public IActionResult Inserir(FormTarefaViewModel tarefaViewModel)
         {
-            Tarefa tarefa = _mapeador.Map<Tarefa>(tarefaViewModel);
+            Result<Tarefa> resultado = _servicoTarefa.Inserir(_mapeador.Map<Tarefa>(tarefaViewModel));
 
-            Result<Tarefa> resultado = _servicoTarefa.Inserir(tarefa);
-
-            return processarResultado(resultado, "inserido");
+            return ProcessarResultado(resultado, tarefaViewModel);
         }
 
         [HttpPut("{id}")]
-        public string Editar(Guid id, FormTarefaViewModel tarefaViewModel)
+        [ProducesResponseType(typeof(FormTarefaViewModel), 200)]
+        [ProducesResponseType(typeof(string[]), 400)]
+        [ProducesResponseType(typeof(string[]), 404)]
+        [ProducesResponseType(typeof(string[]), 500)]
+        public IActionResult Editar(Guid id, FormTarefaViewModel tarefaViewModel)
         {
             Result<Tarefa> resultadoBusca = _servicoTarefa.SelecionarPorId(id);
 
-            if (resultadoBusca.IsFailed)
-                return string.Join("/r/n", resultadoBusca.Errors.Select(e => e.Message).ToArray());
+            if (resultadoBusca.IsFailed) return StatusNotFound(resultadoBusca);
 
-            Tarefa tarefa = _mapeador.Map(tarefaViewModel, resultadoBusca.Value);
+            Result<Tarefa> resultado = _servicoTarefa.Editar(_mapeador.Map(tarefaViewModel, resultadoBusca.Value));
 
-            Result<Tarefa> resultado = _servicoTarefa.Editar(tarefa);
-
-            return processarResultado(resultado, "editado");
+            return ProcessarResultado(resultado, tarefaViewModel);
         }
 
         [HttpDelete("{id}")]
-        public string Excluir(Guid id)
+        [ProducesResponseType(typeof(FormTarefaViewModel), 200)]
+        [ProducesResponseType(typeof(string[]), 400)]
+        [ProducesResponseType(typeof(string[]), 404)]
+        [ProducesResponseType(typeof(string[]), 500)]
+        public IActionResult Excluir(Guid id)
         {
             Result<Tarefa> resultadoBusca = _servicoTarefa.SelecionarPorId(id);
 
-            if (resultadoBusca.IsFailed)
-                return string.Join("/r/n", resultadoBusca.Errors.Select(e => e.Message).ToArray());
+            if (resultadoBusca.IsFailed) return StatusNotFound(resultadoBusca);
 
-            Tarefa tarefa = resultadoBusca.Value;
-
-            Result<Tarefa> resultado = _servicoTarefa.Excluir(tarefa);
-
-            return processarResultado(resultado, "removido");
-        }
-
-        private string processarResultado(Result<Tarefa> resultado, string acao)
-        {
-            if (resultado.IsSuccess)
-                return $"Tarefa {acao} com sucesso!";
-
-            string[] erros = resultado.Errors.Select(x => x.Message).ToArray();
-
-            return string.Join("\r\n", erros);
+            return ProcessarResultado<Tarefa>(_servicoTarefa.Excluir(resultadoBusca.Value));
         }
     }
 }

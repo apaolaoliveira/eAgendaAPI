@@ -1,13 +1,12 @@
 ﻿using eAgenda.Aplicacao.ModuloDespesa;
 using eAgenda.Dominio.ModuloDespesa;
 using eAgenda.WebApi.ViewModels.ModuloDespesa;
-using Microsoft.AspNetCore.Mvc;
 
 namespace eAgenda.WebApi.Controllers.ModuloDespesa
 {
     [ApiController]
     [Route("api/despesas")]
-    public class DespesaController : ControllerBase
+    public class DespesaController : ApiControllerBase
     {
         private readonly ServicoDespesa _servicoDespesa;
         private readonly IMapper _mapeador;
@@ -19,77 +18,82 @@ namespace eAgenda.WebApi.Controllers.ModuloDespesa
         }
 
         [HttpGet]
-        public List<ListarDespesaViewModel> SelecionarTodos()
+        [ProducesResponseType(typeof(ListarDespesaViewModel), 200)]
+        [ProducesResponseType(typeof(string[]), 500)]
+        public IActionResult SelecionarTodos()
         {
-            List<Despesa> despesas = _servicoDespesa.SelecionarTodos().Value;
+            Result<List<Despesa>> resultadoBusca = _servicoDespesa.SelecionarTodos();
 
-            return _mapeador.Map<List<ListarDespesaViewModel>>(despesas);
+            if (resultadoBusca.IsFailed) return StatusNotFound(resultadoBusca);
+
+            return ProcessarResultado(resultadoBusca, _mapeador.Map<List<ListarDespesaViewModel>>(resultadoBusca.Value));
         }
 
         [HttpGet("{id}")]
-        public FormDespesaViewModel SelecionarPorId(Guid id)
+        [ProducesResponseType(typeof(FormDespesaViewModel), 200)]
+        [ProducesResponseType(typeof(string[]), 404)]
+        [ProducesResponseType(typeof(string[]), 500)]
+        public IActionResult SelecionarPorId(Guid id)
         {
-            Despesa despesa = _servicoDespesa.SelecionarPorId(id).Value;
+            Result<Despesa> resultadoBusca = _servicoDespesa.SelecionarPorId(id);
 
-            return _mapeador.Map<FormDespesaViewModel>(despesa);
+            if (resultadoBusca.IsFailed) return StatusNotFound(resultadoBusca);
+
+            return ProcessarResultado(resultadoBusca, _mapeador.Map<FormDespesaViewModel>(resultadoBusca.Value));
         }
 
         [HttpGet("visualizacao-completa/{id}")]
-        public VisualizarDespesaViewModel SelecionarCompletoPorId(Guid id)
+        [ProducesResponseType(typeof(VisualizarDespesaViewModel), 200)]
+        [ProducesResponseType(typeof(string[]), 404)]
+        [ProducesResponseType(typeof(string[]), 500)]
+        public IActionResult SelecionarCompletoPorId(Guid id)
         {
-            Despesa despesa = _servicoDespesa.SelecionarPorId(id).Value;
+            Result<Despesa> resultadoBusca = _servicoDespesa.SelecionarPorId(id);
 
-            return _mapeador.Map<VisualizarDespesaViewModel>(despesa);
+            if (resultadoBusca.IsFailed) return StatusNotFound(resultadoBusca);
+
+            return ProcessarResultado(resultadoBusca, _mapeador.Map<VisualizarDespesaViewModel>(resultadoBusca.Value));
         }
 
         [HttpPost]
-        public string Inserir(FormDespesaViewModel despesaViewModel)
+        [ProducesResponseType(typeof(FormDespesaViewModel), 200)]
+        [ProducesResponseType(typeof(string[]), 400)]
+        [ProducesResponseType(typeof(string[]), 500)]
+        public IActionResult Inserir(FormDespesaViewModel despesaViewModel)
         {
-            Despesa despesa = _mapeador.Map<Despesa>(despesaViewModel);
+            Result<Despesa> resultado = _servicoDespesa.Inserir(_mapeador.Map<Despesa>(despesaViewModel));
 
-            Result<Despesa> resultado = _servicoDespesa.Inserir(despesa);
-
-            return processarResultado(resultado, "inserido");
+            return ProcessarResultado(resultado, despesaViewModel);
         }
 
         [HttpPut("{id}")]
-        public string Editar(Guid id, FormDespesaViewModel despesaViewModel)
+        [ProducesResponseType(typeof(FormDespesaViewModel), 200)]
+        [ProducesResponseType(typeof(string[]), 400)]
+        [ProducesResponseType(typeof(string[]), 404)]
+        [ProducesResponseType(typeof(string[]), 500)]
+        public IActionResult Editar(Guid id, FormDespesaViewModel despesaViewModel)
         {
             Result<Despesa> resultadoBusca = _servicoDespesa.SelecionarPorId(id);
 
-            if (resultadoBusca.IsFailed)
-                return string.Join("/r/n", resultadoBusca.Errors.Select(e => e.Message).ToArray());
+            if (resultadoBusca.IsFailed) return StatusNotFound(resultadoBusca);
 
-            Despesa despesa = _mapeador.Map(despesaViewModel, resultadoBusca.Value);
+            Result<Despesa> resultado = _servicoDespesa.Editar(_mapeador.Map(despesaViewModel, resultadoBusca.Value));
 
-            Result<Despesa> resultado = _servicoDespesa.Editar(despesa);
-
-            return processarResultado(resultado, "editado");
+            return ProcessarResultado(resultado, despesaViewModel);
         }
 
         [HttpDelete("{id}")]
-        public string Excluir(Guid id)
+        [ProducesResponseType(typeof(FormDespesaViewModel), 200)]
+        [ProducesResponseType(typeof(string[]), 400)]
+        [ProducesResponseType(typeof(string[]), 404)]
+        [ProducesResponseType(typeof(string[]), 500)]
+        public IActionResult Excluir(Guid id)
         {
             Result<Despesa> resultadoBusca = _servicoDespesa.SelecionarPorId(id);
 
-            if (resultadoBusca.IsFailed)
-                return string.Join("/r/n", resultadoBusca.Errors.Select(e => e.Message).ToArray());
+            if (resultadoBusca.IsFailed) return StatusNotFound(resultadoBusca);
 
-            Despesa despesa = resultadoBusca.Value;
-
-            Result<Despesa> resultado = _servicoDespesa.Excluir(despesa);
-
-            return processarResultado(resultado, "removido");
-        }
-
-        private string processarResultado(Result<Despesa> resultado, string acao)
-        {
-            if (resultado.IsSuccess)
-                return $"Despesa {acao} com sucesso!";
-
-            string[] erros = resultado.Errors.Select(x => x.Message).ToArray();
-
-            return string.Join("\r\n", erros);
+            return ProcessarResultado<Despesa>(_servicoDespesa.Excluir(resultadoBusca.Value));
         }
     }
 }

@@ -1,22 +1,20 @@
 ﻿using eAgenda.Aplicacao.ModuloContato;
 using eAgenda.Dominio.ModuloContato;
 using eAgenda.WebApi.ViewModels.ModuloContato;
-using Microsoft.AspNetCore.Http.Extensions;
-using Microsoft.AspNetCore.Mvc;
 
 namespace eAgenda.WebApi.Controllers.ModuloContato
 {
     [ApiController]
     [Route("api/contatos")]
-    public class ContatoController : ControllerBase
+    public class ContatoController : ApiControllerBase
     {
         private readonly ServicoContato _servicoContato;
-        private readonly IMapper _mapeador;   
+        private readonly IMapper _mapeador;
 
         public ContatoController(ServicoContato servicoContato, IMapper mapeador)
         {
-            this._servicoContato = servicoContato;
-            this._mapeador = mapeador;
+            _servicoContato = servicoContato;
+            _mapeador = mapeador;
         }
 
         [HttpGet]
@@ -24,36 +22,24 @@ namespace eAgenda.WebApi.Controllers.ModuloContato
         [ProducesResponseType(typeof(string[]), 500)]
         public IActionResult SelecionarTodos(StatusFavoritoEnum statusFavorito)
         {
-            List<Contato> contatos = _servicoContato.SelecionarTodos(statusFavorito).Value;
+            Result<List<Contato>> resultadoBusca = _servicoContato.SelecionarTodos(statusFavorito);
 
-            return Ok(new
-            {
-                Sucesso = true,
-                Dados = _mapeador.Map<List<ListarContatoViewModel>>(contatos),
-                QtdRegistros = contatos.Count
-            });
+            if (resultadoBusca.IsFailed) return StatusNotFound(resultadoBusca);
+
+            return ProcessarResultado(resultadoBusca, _mapeador.Map<List<ListarContatoViewModel>>(resultadoBusca.Value));
         }
 
         [HttpGet("{id}")]
-        [ProducesResponseType(typeof(VisualizarContatoViewModel), 200)]
+        [ProducesResponseType(typeof(FormContatoViewModel), 200)]
         [ProducesResponseType(typeof(string[]), 404)]
         [ProducesResponseType(typeof(string[]), 500)]
         public IActionResult SelecionarPorId(Guid id)
         {
             Result<Contato> resultadoBusca = _servicoContato.SelecionarPorId(id);
 
-            if (resultadoBusca.IsFailed)
-                return NotFound(new
-                {
-                    Sucesso = false,
-                    Erros = string.Join("\r\n", resultadoBusca.Errors.Select(e => e.Message).ToArray())
-                });
+            if (resultadoBusca.IsFailed) return StatusNotFound(resultadoBusca);
 
-            return Ok(new
-            {
-                Sucesso = true,
-                Dados = _mapeador.Map<FormContatoViewModel>(resultadoBusca)
-            });
+            return ProcessarResultado(resultadoBusca, _mapeador.Map<FormContatoViewModel>(resultadoBusca.Value));
         }
 
         [HttpGet("visualizacao-completa/{id}")]
@@ -64,18 +50,9 @@ namespace eAgenda.WebApi.Controllers.ModuloContato
         {
             Result<Contato> resultadoBusca = _servicoContato.SelecionarPorId(id);
 
-            if (resultadoBusca.IsFailed)
-                return NotFound(new
-                {
-                    Sucesso = false,
-                    Erros = string.Join("\r\n", resultadoBusca.Errors.Select(e => e.Message).ToArray())
-                });
+            if (resultadoBusca.IsFailed) return StatusNotFound(resultadoBusca);
 
-            return Ok(new
-            {
-                Sucesso = true,
-                Dados = _mapeador.Map<VisualizarContatoViewModel>(resultadoBusca)
-            });
+            return ProcessarResultado(resultadoBusca, _mapeador.Map<VisualizarContatoViewModel>(resultadoBusca.Value));
         }
 
         [HttpPost]
@@ -84,9 +61,9 @@ namespace eAgenda.WebApi.Controllers.ModuloContato
         [ProducesResponseType(typeof(string[]), 500)]
         public IActionResult Inserir(FormContatoViewModel contatoViewModel)
         {
-            Contato contato = _mapeador.Map<Contato>(contatoViewModel);
+            Result<Contato> resultado = _servicoContato.Inserir(_mapeador.Map<Contato>(contatoViewModel));
 
-            return ProcessarResultado(_servicoContato.Inserir(contato), contatoViewModel);
+            return ProcessarResultado(resultado, contatoViewModel);
         }
 
         [HttpPut("{id}")]
@@ -98,21 +75,15 @@ namespace eAgenda.WebApi.Controllers.ModuloContato
         {
             Result<Contato> resultadoBusca = _servicoContato.SelecionarPorId(id);
 
-            if (resultadoBusca.IsFailed)
-                return NotFound(new
-                {
-                    Sucesso = false,
-                    Erros = string.Join("\r\n", resultadoBusca.Errors.Select(e => e.Message).ToArray())
-                });
+            if (resultadoBusca.IsFailed) return StatusNotFound(resultadoBusca);
 
-            // mescla os dois objs mantendo a referência do objeto destino
-            Contato contato = _mapeador.Map(contatoViewModel, resultadoBusca.Value); // source, destination
+            Result<Contato> resultado = _servicoContato.Editar(_mapeador.Map(contatoViewModel, resultadoBusca.Value));
 
-            return ProcessarResultado(_servicoContato.Editar(contato), contatoViewModel);
+            return ProcessarResultado(resultado, contatoViewModel);
         }
 
         [HttpDelete("{id}")]
-        [ProducesResponseType(200)]
+        [ProducesResponseType(typeof(FormContatoViewModel), 200)]
         [ProducesResponseType(typeof(string[]), 400)]
         [ProducesResponseType(typeof(string[]), 404)]
         [ProducesResponseType(typeof(string[]), 500)]
@@ -120,30 +91,9 @@ namespace eAgenda.WebApi.Controllers.ModuloContato
         {
             Result<Contato> resultadoBusca = _servicoContato.SelecionarPorId(id);
 
-            if (resultadoBusca.IsFailed)
-                return NotFound(new
-                {
-                    Sucesso = false,
-                    Erros = string.Join("\r\n", resultadoBusca.Errors.Select(e => e.Message).ToArray())
-                });
+            if (resultadoBusca.IsFailed) return StatusNotFound(resultadoBusca);
 
-            return ProcessarResultado(_servicoContato.Excluir(resultadoBusca.Value));
-        }
-
-        private IActionResult ProcessarResultado(Result<Contato> resultadoBusca, FormContatoViewModel contatoViewModel = null)
-        {
-            if (resultadoBusca.IsFailed)
-                return NotFound(new
-                {
-                    sucesso = false,
-                    erros = resultadoBusca.Errors.Select(e => e.Message)
-                });
-
-            return Ok(new
-            {
-                Sucesso = true,
-                Dados = contatoViewModel
-            });
+            return ProcessarResultado<Contato>(_servicoContato.Excluir(resultadoBusca.Value));
         }
     }
 }
