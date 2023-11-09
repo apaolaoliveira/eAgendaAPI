@@ -1,13 +1,9 @@
 ﻿using eAgenda.Dominio;
 using eAgenda.Dominio.ModuloContato;
-using FluentResults;
-using Serilog;
-using System;
-using System.Collections.Generic;
 
 namespace eAgenda.Aplicacao.ModuloContato
 {
-    public class ServicoContato : ServicoApiBase<Contato, ValidadorContato>, IServicoApiBase<Contato>
+    public class ServicoContato : ServicoApiBase<Contato, ValidadorContato>
     {
         private IRepositorioContato repositorioContato;
         private IContextoPersistencia contextoPersistencia;
@@ -79,9 +75,9 @@ namespace eAgenda.Aplicacao.ModuloContato
 
             if (contato == null)
             {
-                Log.Logger.Warning("Contato {ContatoId} não encontrado", id);
+                Log.Logger.Warning("--- [Módulo Contato] -> Contato {ContatoId} não encontrado ---", id);
 
-                return Result.Fail($"Contato {id} não encontrado");
+                return Result.Fail("--- [Módulo Contato] -> Contato não encontrado ---");
             }
 
             return Result.Ok(contato);

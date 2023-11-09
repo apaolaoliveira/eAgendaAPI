@@ -1,13 +1,9 @@
 ﻿using eAgenda.Dominio;
 using eAgenda.Dominio.ModuloDespesa;
-using FluentResults;
-using Serilog;
-using System;
-using System.Collections.Generic;
 
 namespace eAgenda.Aplicacao.ModuloDespesa
 {
-    public class ServicoDespesa : ServicoApiBase<Despesa, ValidadorDespesa>, IServicoApiBase<Despesa>
+    public class ServicoDespesa : ServicoApiBase<Despesa, ValidadorDespesa>
     {
         private IRepositorioDespesa repositorioDespesa;
         private IContextoPersistencia contextoPersistencia;
@@ -21,90 +17,39 @@ namespace eAgenda.Aplicacao.ModuloDespesa
 
         public Result<Despesa> Inserir(Despesa despesa)
         {
-            Log.Logger.Debug("Tentando inserir despesa... {@d}", despesa);
-
             Result resultado = Validar(despesa);
 
             if (resultado.IsFailed)
                 return Result.Fail(resultado.Errors);
 
-            try
-            {
-                repositorioDespesa.Inserir(despesa);
+            repositorioDespesa.Inserir(despesa);
 
-                contextoPersistencia.GravarDados();
+            contextoPersistencia.GravarDados();
 
-                Log.Logger.Information("Despesa {DespesaId} inserida com sucesso", despesa.Id);
-
-                return Result.Ok(despesa);
-            }
-            catch (Exception ex)
-            {
-                contextoPersistencia.DesfazerAlteracoes();
-
-                string msgErro = "Falha no sistema ao tentar inserir a Despesa";
-
-                Log.Logger.Error(ex, msgErro + " {DespesaId} ", despesa.Id);
-
-                return Result.Fail(msgErro);
-            }
+            return Result.Ok(despesa);
         }
 
         public Result<Despesa> Editar(Despesa despesa)
         {
-            Log.Logger.Debug("Tentando editar despesa... {@d}", despesa);
-
             var resultado = Validar(despesa);
 
             if (resultado.IsFailed)
                 return Result.Fail(resultado.Errors);
 
-            try
-            {
-                repositorioDespesa.Editar(despesa);
+            repositorioDespesa.Editar(despesa);
 
-                contextoPersistencia.GravarDados();
-
-                Log.Logger.Information("Despesa {DespesaId} editada com sucesso", despesa.Id);
-            }
-            catch (Exception ex)
-            {
-                contextoPersistencia.DesfazerAlteracoes();
-
-                string msgErro = "Falha no sistema ao tentar editar a Despesa";
-
-                Log.Logger.Error(ex, msgErro + " {DespesaId}", despesa.Id);
-
-                return Result.Fail(msgErro);
-            }
+            contextoPersistencia.GravarDados();
 
             return Result.Ok(despesa);
         }
 
         public Result Excluir(Despesa despesa)
         {
-            Log.Logger.Debug("Tentando excluir despesa... {@d}", despesa);
+            repositorioDespesa.Excluir(despesa);
 
-            try
-            {
-                repositorioDespesa.Excluir(despesa);
+            contextoPersistencia.GravarDados();
 
-                contextoPersistencia.GravarDados();
-
-                Log.Logger.Information("Despesa {DespesaId} editada com sucesso", despesa.Id);
-
-                return Result.Ok();
-            }
-            catch (Exception ex)
-            {
-                contextoPersistencia.DesfazerAlteracoes();
-
-                string msgErro = "Falha no sistema ao tentar excluir a Despesa";
-
-                Log.Logger.Error(ex, msgErro + " {DespesaId}", despesa.Id);
-
-                return Result.Fail(msgErro);
-            }
+            return Result.Ok();
         }
 
         public Result Excluir(Guid id)
@@ -119,97 +64,37 @@ namespace eAgenda.Aplicacao.ModuloDespesa
 
         public Result<List<Despesa>> SelecionarTodos()
         {
-            Log.Logger.Debug("Tentando selecionar despesas...");
+            var despesas = repositorioDespesa.SelecionarTodos();
 
-            try
-            {
-                var despesas = repositorioDespesa.SelecionarTodos();
-
-                Log.Logger.Information("Despesas selecionadas com sucesso");
-
-                return Result.Ok(despesas);
-            }
-            catch (Exception ex)
-            {
-                string msgErro = "Falha no sistema ao tentar selecionar todas as Despesas";
-
-                Log.Logger.Error(ex, msgErro);
-
-                return Result.Fail(msgErro);
-            }
+            return Result.Ok(despesas);
         }
 
         public Result<List<Despesa>> SelecionarDespesasAntigas(DateTime dataAtual)
         {
-            Log.Logger.Debug("Tentando selecionar despesas antigas...");
+            var despesas = repositorioDespesa.SelecionarDespesasAntigas(dataAtual);
 
-            try
-            {
-                var despesas = repositorioDespesa.SelecionarDespesasAntigas(dataAtual);
-
-                Log.Logger.Information("Despesas antigas selecionadas com sucesso");
-
-                return Result.Ok(despesas);
-            }
-            catch (Exception ex)
-            {
-                string msgErro = "Falha no sistema ao tentar selecionar as despesas antigas";
-
-                Log.Logger.Error(ex, msgErro);
-
-                return Result.Fail(msgErro);
-            }
+            return Result.Ok(despesas);
         }
 
         public Result<List<Despesa>> SelecionarDespesasUltimos30Dias(DateTime dataAtual)
         {
-            Log.Logger.Debug("Tentando selecionar despesas recentes...");
+            var despesas = repositorioDespesa.SelecionarDespesasUltimos30Dias(dataAtual);
 
-            try
-            {
-                var despesas = repositorioDespesa.SelecionarDespesasUltimos30Dias(dataAtual);
-
-                Log.Logger.Information("Despesas recentes selecionadas com sucesso");
-
-                return Result.Ok(despesas);
-            }
-            catch (Exception ex)
-            {
-                string msgErro = "Falha no sistema ao tentar selecionar as despesas recentes";
-
-                Log.Logger.Error(ex, msgErro);
-
-                return Result.Fail(msgErro);
-            }
+            return Result.Ok(despesas);
         }
 
         public Result<Despesa> SelecionarPorId(Guid id)
         {
-            Log.Logger.Debug("Tentando selecionar despesa {DespesaId}...", id);
+            var despesa = repositorioDespesa.SelecionarPorId(id);
 
-            try
+            if (despesa == null)
             {
-                var despesa = repositorioDespesa.SelecionarPorId(id);
+                Log.Logger.Warning("--- [Módulo Despesa] -> Despesa {DespesaId} não encontrada ---", id);
 
-                if (despesa == null)
-                {
-                    Log.Logger.Warning("Despesa {DespesaId} não encontrada", id);
-
-                    return Result.Fail("Despesa não encontrada");
-                }
-
-                Log.Logger.Information("Despesa {DespesaId} selecionada com sucesso", id);
-
-                return Result.Ok(despesa);
+                return Result.Fail("--- [Módulo Despesa] -> Despesa não encontrada ---");
             }
-            catch (Exception ex)
-            {
-                string msgErro = "Falha no sistema ao tentar selecionar o Despesa";
 
-                Log.Logger.Error(ex, msgErro + " {DespesaId}", id);
-
-                return Result.Fail(msgErro);
-            }
+            return Result.Ok(despesa);
         }
     }
 }

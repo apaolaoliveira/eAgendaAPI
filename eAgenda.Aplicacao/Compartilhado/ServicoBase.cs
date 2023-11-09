@@ -1,7 +1,4 @@
-﻿using FluentResults;
-using FluentValidation;
-using Serilog;
-using System.Collections.Generic;
+﻿using FluentValidation;
 using System.Linq;
 
 namespace eAgenda.Aplicacao

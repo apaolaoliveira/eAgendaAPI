@@ -1,13 +1,9 @@
 ﻿using eAgenda.Dominio;
 using eAgenda.Dominio.ModuloCategoria;
-using FluentResults;
-using Serilog;
-using System;
-using System.Collections.Generic;
 
 namespace eAgenda.Aplicacao.ModuloCategoria
 {
-    public class ServicoCategoria : ServicoApiBase<Categoria, ValidadorCategoria>, IServicoApiBase<Categoria>
+    public class ServicoCategoria : ServicoApiBase<Categoria, ValidadorCategoria>
     {
         private IRepositorioCategoria repositorioCategoria;
         private IContextoPersistencia contextoPersistencia;
@@ -21,62 +17,28 @@ namespace eAgenda.Aplicacao.ModuloCategoria
 
         public Result<Categoria> Inserir(Categoria categoria)
         {
-            Log.Logger.Debug("Tentando inserir categoria... {@c}", categoria);
-
             Result resultado = Validar(categoria);
 
             if (resultado.IsFailed)
                 return Result.Fail(resultado.Errors);
 
-            try
-            {
-                repositorioCategoria.Inserir(categoria);
+            repositorioCategoria.Inserir(categoria);
 
-                contextoPersistencia.GravarDados();
+            contextoPersistencia.GravarDados();
 
-                Log.Logger.Information("Categoria {CategoriaId} inserida com sucesso", categoria.Id);
-
-                return Result.Ok(categoria);
-            }
-            catch (Exception ex)
-            {
-                contextoPersistencia.DesfazerAlteracoes();
-
-                string msgErro = "Falha no sistema ao tentar inserir a Categoria";
-
-                Log.Logger.Error(ex, msgErro + " {CategoriaId} ", categoria.Id);
-
-                return Result.Fail(msgErro);
-            }
+            return Result.Ok(categoria);
         }
 
         public Result<Categoria> Editar(Categoria categoria)
         {
-            Log.Logger.Debug("Tentando editar categoria... {@c}", categoria);
-
             var resultado = Validar(categoria);
 
             if (resultado.IsFailed)
                 return Result.Fail(resultado.Errors);
 
-            try
-            {
-                repositorioCategoria.Editar(categoria);
+            repositorioCategoria.Editar(categoria);
 
-                contextoPersistencia.GravarDados();
-
-                Log.Logger.Information("Categoria {CategoriaId} editada com sucesso", categoria.Id);
-            }
-            catch (Exception ex)
-            {
-                contextoPersistencia.DesfazerAlteracoes();
-
-                string msgErro = "Falha no sistema ao tentar editar a Categoria";
-
-                Log.Logger.Error(ex, msgErro + " {CategoriaId}", categoria.Id);
-
-                return Result.Fail(msgErro);
-            }
+            contextoPersistencia.GravarDados();
 
             return Result.Ok(categoria);
         }
@@ -93,81 +55,32 @@ namespace eAgenda.Aplicacao.ModuloCategoria
 
         public Result Excluir(Categoria categoria)
         {
-            Log.Logger.Debug("Tentando excluir categoria... {@c}", categoria);
+            repositorioCategoria.Excluir(categoria);
 
-            try
-            {
-                repositorioCategoria.Excluir(categoria);
+            contextoPersistencia.GravarDados();
 
-                contextoPersistencia.GravarDados();
-
-                Log.Logger.Information("Categoria {CategoriaId} editada com sucesso", categoria.Id);
-
-                return Result.Ok();
-            }
-            catch (Exception ex)
-            {
-                contextoPersistencia.DesfazerAlteracoes();
-
-                string msgErro = "Falha no sistema ao tentar excluir a Categoria";
-
-                Log.Logger.Error(ex, msgErro + " {CategoriaId}", categoria.Id);
-
-                return Result.Fail(msgErro);
-            }
+            return Result.Ok();
         }
 
         public Result<List<Categoria>> SelecionarTodos()
         {
-            Log.Logger.Debug("Tentando selecionar categorias...");
+            var categorias = repositorioCategoria.SelecionarTodos();
 
-            try
-            {
-                var categorias = repositorioCategoria.SelecionarTodos();
-
-                Log.Logger.Information("Categorias selecionadas com sucesso");
-
-                return Result.Ok(categorias);
-            }
-            catch (Exception ex)
-            {
-                string msgErro = "Falha no sistema ao tentar selecionar todas as Categorias";
-
-                Log.Logger.Error(ex, msgErro);
-
-                return Result.Fail(msgErro);
-            }
+            return Result.Ok(categorias);
         }
 
         public Result<Categoria> SelecionarPorId(Guid id)
         {
-            Log.Logger.Debug("Tentando selecionar categoria {CategoriaId}...", id);
+            var categoria = repositorioCategoria.SelecionarPorId(id);
 
-            try
+            if (categoria == null)
             {
-                var categoria = repositorioCategoria.SelecionarPorId(id);
+                Log.Logger.Warning("--- [Módulo Categoria] -> Categoria {CategoriaId} não encontrada ---", id);
 
-                if (categoria == null)
-                {
-                    Log.Logger.Warning("Categoria {CategoriaId} não encontrada", id);
-
-                    return Result.Fail("Categoria não encontrada");
-                }
-
-                Log.Logger.Information("Categoria {CategoriaId} selecionada com sucesso", id);
-
-                return Result.Ok(categoria);
+                return Result.Fail("--- [Módulo Categoria] -> Categoria não encontrada ---");
             }
-            catch (Exception ex)
-            {
-                string msgErro = "Falha no sistema ao tentar selecionar o Categoria";
 
-                Log.Logger.Error(ex, msgErro + " {CategoriaId}", id);
-
-                return Result.Fail(msgErro);
-            }
+            return Result.Ok(categoria);
         }
-
-
     }
 }
