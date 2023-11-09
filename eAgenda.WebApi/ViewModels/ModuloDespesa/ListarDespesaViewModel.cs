@@ -2,7 +2,7 @@
 
 namespace eAgenda.WebApi.ViewModels.ModuloDespesa
 {
-    public class ListarDespesaViewModel : ViewModelBase<ListarDespesaViewModel>
+    public class ListarDespesaViewModel
     {
         public Guid Id { get; set; }
         public string Descricao { get; set; }

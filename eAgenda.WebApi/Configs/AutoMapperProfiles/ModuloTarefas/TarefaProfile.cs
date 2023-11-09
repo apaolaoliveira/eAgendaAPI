@@ -8,9 +8,13 @@ namespace eAgenda.WebApi.Configs.AutoMapperProfiles.ModuloTarefas
         public TarefaProfile()
         {
             CreateMap<Tarefa, FormTarefaViewModel>();
-            CreateMap<Tarefa, ListarTarefaViewModel>();
-            CreateMap<Tarefa, VisualizarTarefaViewModel>();
-            CreateMap<FormTarefaViewModel, Tarefa>();
+            CreateMap<Tarefa, ListarTarefaViewModel>()
+                .ForMember(des => des.DataCriacao, opt => opt.MapFrom(origem => origem.DataCriacao.ToShortDateString()));
+
+            CreateMap<Tarefa, VisualizarTarefaViewModel>()
+                .ForMember(des => des.DataCriacao, opt => opt.MapFrom(origem => origem.DataCriacao.ToShortDateString()));
+
+            CreateMap<FormTarefaViewModel, Tarefa>();            
         }
     }
 }

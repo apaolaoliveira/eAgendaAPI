@@ -26,7 +26,7 @@ namespace eAgenda.WebApi.Controllers.ModuloTarefa
 
             if (resultadoBusca.IsFailed) return StatusNotFound(resultadoBusca);
 
-            return ProcessarResultado(resultadoBusca, _mapeador.Map<ListarTarefaViewModel>(resultadoBusca.Value));
+            return ProcessarResultado(resultadoBusca, _mapeador.Map<List<ListarTarefaViewModel>>(resultadoBusca.Value));
         }
 
         [HttpGet("{id}")]
@@ -39,7 +39,7 @@ namespace eAgenda.WebApi.Controllers.ModuloTarefa
 
             if (resultadoBusca.IsFailed) return StatusNotFound(resultadoBusca);
 
-            return ProcessarResultado(resultadoBusca, _mapeador.Map<ListarTarefaViewModel>(resultadoBusca.Value));
+            return ProcessarResultado(resultadoBusca, _mapeador.Map<FormTarefaViewModel>(resultadoBusca.Value));
         }
 
         [HttpGet("visualizacao-completa/{id}")]

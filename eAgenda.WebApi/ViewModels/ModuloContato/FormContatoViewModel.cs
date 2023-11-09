@@ -1,6 +1,6 @@
 ﻿namespace eAgenda.WebApi.ViewModels.ModuloContato
 {
-    public class FormContatoViewModel : ViewModelBase<FormContatoViewModel>
+    public class FormContatoViewModel
     {
         public string Nome { get; set; }
         public string Empresa { get; set; }

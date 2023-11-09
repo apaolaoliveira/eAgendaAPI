@@ -2,7 +2,7 @@
 
 namespace eAgenda.WebApi.ViewModels.ModuloDespesa
 {
-    public class FormDespesaViewModel : ViewModelBase<FormDespesaViewModel>
+    public class FormDespesaViewModel
     {
         public string Descricao { get; set; }
         public decimal Valor { get; set; }

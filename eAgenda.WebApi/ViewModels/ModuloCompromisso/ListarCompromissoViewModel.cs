@@ -1,6 +1,6 @@
 ﻿namespace eAgenda.WebApi.ViewModels.ModuloCompromisso
 {
-    public class ListarCompromissoViewModel : ViewModelBase<ListarCompromissoViewModel>
+    public class ListarCompromissoViewModel
     {
         public Guid Id { get; set; }
         public string Assunto { get; set; }
